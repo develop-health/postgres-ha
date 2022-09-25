@@ -22,7 +22,7 @@ FROM flyio/stolon:2e719de as stolon
 
 FROM wrouesnel/postgres_exporter:latest AS postgres_exporter
 
-FROM postgres:${PG_VERSION}
+FROM supabase/postgres
 ARG VERSION 
 ARG POSTGIS_MAJOR=3
 ARG WALG_VERSION=2.0.0
@@ -48,6 +48,8 @@ ADD /config/* /fly/
 RUN useradd -ms /bin/bash stolon
 RUN mkdir -p /run/haproxy/
 COPY --from=flyutil /fly/bin/* /usr/local/bin/
+
+ADD /init/* /docker-entrypoint-initdb.d/
 
 EXPOSE 5432
 

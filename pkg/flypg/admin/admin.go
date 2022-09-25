@@ -208,6 +208,15 @@ func DeleteDatabase(ctx context.Context, pg *pgx.Conn, name string) error {
 	return nil
 }
 
+func RunMigration(ctx context.Context, pg *pgx.Conn, migration_contents string) error {
+	_, err := pg.Exec(ctx, migration_contents)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func FindDatabase(ctx context.Context, pg *pgx.Conn, name string) (*DbInfo, error) {
 	sql := `
 	SELECT 

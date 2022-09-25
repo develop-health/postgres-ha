@@ -104,6 +104,11 @@ func main() {
 						continue
 					}
 
+					if err = initMigrations(context.TODO(), pg); err != nil {
+						fmt.Println("error running migrations:", err)
+						continue
+					}
+
 					// Stolon handles replUser creation during initial bootstrap.
 					if cfg.InitMode == flypg.InitModeExisting {
 						if err = initReplicationUser(context.TODO(), pg, node.ReplCredentials); err != nil {
@@ -249,6 +254,41 @@ func initOperator(ctx context.Context, pg *pgx.Conn, creds flypg.Credentials) er
 	}
 
 	fmt.Println("operator ready!")
+
+	return nil
+}
+
+func initMigrations(ctx context.Context, pg *pgx.Conn) error {
+	fmt.Println("running migrations")
+
+	err := filepath.Walk("/docker-entrypoint-initdb.d/", func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		fmt.Println("running migration:", info.Name())
+
+		body, err := ioutil.ReadFile(path)
+    if err != nil {
+			return err
+    }
+
+		err = admin.RunMigration(ctx, pg, string(body))
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("migrations complete!")
 
 	return nil
 }
